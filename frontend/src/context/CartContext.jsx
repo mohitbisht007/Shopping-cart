@@ -1,32 +1,67 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-// Create Cart Context
 const CartContext = createContext();
 
-// Create a custom hook to use the Cart Context
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  return useContext(CartContext);
+};
 
-// Create the Cart Provider
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    // Load cart items from localStorage on initial load
+    const storedCart = localStorage.getItem('cartItems');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
 
-  // Add item to cart
-  const addToCart = (product) => {
-    setCart((prevCart) => [...prevCart, product]);
+  useEffect(() => {
+    // Save cart items to localStorage whenever they change
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const addToCart = (product, quantity = 1) => {
+    const existingItem = cartItems.find(item => item._id === product._id);
+
+    if (existingItem) {
+      setCartItems(cartItems.map(item =>
+        item._id === product._id ? { ...item, quantity: item.quantity + quantity } : item
+      ));
+    } else {
+      setCartItems([...cartItems, { ...product, quantity }]);
+    }
   };
 
-  // Remove item from cart
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((product) => product.id !== productId));
+    setCartItems(cartItems.filter(item => item._id !== productId));
   };
 
-  // Get total number of items in the cart
-  const getCartItemCount = () => {
-    return cart.length;
+  const updateQuantity = (productId, quantity) => {
+    setCartItems(cartItems.map(item =>
+      item._id === productId ? { ...item, quantity: parseInt(quantity, 10) } : item
+    ));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  const getItemCount = () => {
+    return cartItems.reduce((count, item) => count + item.quantity, 0);
+  };
+
+  const getTotalPrice = () => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, getCartItemCount }}>
+    <CartContext.Provider value={{
+      cartItems,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getItemCount,
+      getTotalPrice,
+    }}>
       {children}
     </CartContext.Provider>
   );

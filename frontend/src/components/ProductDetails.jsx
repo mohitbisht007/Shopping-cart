@@ -1,34 +1,39 @@
-
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const sampleProduct = {
-    _id: 'someId',
-    name: 'Sample Product Details',
-    image: 'https://via.placeholder.com/400/808080', // Gray placeholder
-    description: 'This is a sample product description with more details. You can talk about the features, benefits, and specifications of the product here.',
-    price: 79.99,
-    rating: 4.3,
-    numReviews: 55,
-  };
+import { useCart } from '../context/CartContext';
 
 function ProductDetails({ productId }) {
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-  
-    useEffect(() => {
-      // Simulate fetching product details based on productId
-      setTimeout(() => {
-        if (productId === '1' || productId === '2' || productId === 'someId') {
-          setProduct(sampleProduct);
-          setLoading(false);
-        } else {
-          setError('Product not found.');
-          setLoading(false);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { addToCart } = useCart();
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product);
+      alert(`${product.name} added to cart!`); // Basic feedback
+    }
+  };
+
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/products/${productId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      }, 500);
-    }, [productId]);// Re-fetch if the productId changes
+        const data = await response.json();
+        setProduct(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        console.error("Error fetching product details:", err);
+      }
+    };
+
+    fetchProductDetails();
+  }, [productId]); // Re-fetch if the productId changes
 
   if (loading) {
     return <div className="text-center py-8">Loading product details...</div>;
@@ -56,8 +61,8 @@ function ProductDetails({ productId }) {
         </div>
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">{product.name}</h2>
-          <p className="text-gray-600 mb-4">{product.description || 'No description available.'}</p>
-          <p className="text-xl font-bold text-gray-700 mb-4">${product.price}</p>
+          <p className="text-gray-600 mb-4">{product.description}</p>
+          <p className="text-xl font-bold text-gray-700 mb-4">₹{product.price}</p>
           <div className="flex items-center mb-4">
             {product.rating && (
               <>
@@ -75,7 +80,9 @@ function ProductDetails({ productId }) {
               </>
             )}
           </div>
-          <button className="bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600">
+          <button className="bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600"
+            onClick={handleAddToCart}
+          >
             Add to Cart
           </button>
           <Link to="/" className="inline-block mt-4 text-blue-500 hover:underline">

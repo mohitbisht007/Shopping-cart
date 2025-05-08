@@ -20,8 +20,4 @@ router
   .put(protect, admin, updateProduct)
   .delete(protect, admin, deleteProduct);
 
-router.get("/", getProducts);
-router.get("/:id", getProductById);
-
-
 export default router;

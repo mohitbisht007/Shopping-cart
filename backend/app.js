@@ -3,6 +3,11 @@ const app = express();
 import productRoutes from "./src/routes/productRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js"
+import cors from 'cors'
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+  }));
 
 app.use(express.json())
 
